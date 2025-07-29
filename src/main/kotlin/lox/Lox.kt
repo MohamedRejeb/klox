@@ -4,7 +4,6 @@ import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
 import java.nio.charset.Charset
-import java.util.Scanner
 import kotlin.io.path.Path
 import kotlin.io.path.readBytes
 import kotlin.system.exitProcess
@@ -48,7 +47,7 @@ private fun runPrompt() {
 
 private fun run(source: String) {
     val scanner = Scanner(source)
-    val tokens = scanner.tokens()
+    val tokens = scanner.scanTokens()
 
     tokens.forEach { token ->
         println(token)
