@@ -47,13 +47,82 @@ class Scanner(private val source: String) {
             '<' -> if (match('=')) TokenType.LESS_EQUAL else TokenType.LESS
             '>' -> if (match('=')) TokenType.GREATER_EQUAL else TokenType.GREATER
 
-            else -> return Lox.error(
-                line = line,
-                message = "Unexpected character $c."
-            )
+            '/' ->
+                if (match('/')) {
+                    // A comment goes until the end of the line.
+                    while (peek() != '\n' && !isAtEnd()) {
+                        advance()
+                    }
+
+                    return
+                } else {
+                    TokenType.SLASH
+                }
+
+            ' ', '\r', '\t' -> return // Ignore whitespace.
+
+            '\n' -> { line ++; return }
+
+            '"' -> {
+                string()
+                return
+            }
+
+            else -> {
+                if (isDigit(c)) {
+                    number()
+                } else {
+                    Lox.error(
+                        line = line,
+                        message = "Unexpected character $c."
+                    )
+                }
+                return
+            }
         }
 
         addToken(type)
+    }
+
+    private fun number() {
+        while (isDigit(peek())) {
+            advance()
+        }
+
+        // Look for a fractional part.
+        if (peek() == '.' && isDigit(peekNext())) {
+            // Consume the "."
+            advance()
+
+            while (isDigit(peek())) {
+                advance()
+            }
+        }
+
+        addToken(
+            type = TokenType.NUMBER,
+            literal = source.substring(start, current).toDouble()
+        )
+    }
+
+    private fun string() {
+        while (peek() != '"' && !isAtEnd()) {
+            if (peek() == '\n')
+                line++
+            advance()
+        }
+
+        if (isAtEnd()) {
+            Lox.error(line, "Unterminated string.")
+            return
+        }
+
+        // The closing ".
+        advance()
+
+        // Trim the surrounding quotes.
+        val value = source.substring(start + 1, current - 1)
+        addToken(type = TokenType.STRING, literal = value)
     }
 
     private fun match(expected: Char): Boolean {
@@ -65,6 +134,24 @@ class Scanner(private val source: String) {
 
         current++
         return true
+    }
+
+    private fun peek(): Char {
+        if (isAtEnd())
+            return '\u0000' // '\0' or NUL character
+
+        return source[current]
+    }
+
+    private fun peekNext(): Char {
+        if (current + 1 >= source.length)
+            return '\u0000' // '\0' or NUL character
+
+        return source[current + 1]
+    }
+
+    private fun isDigit(c: Char): Boolean {
+        return c in '0'..'9'
     }
 
     private fun isAtEnd(): Boolean {
