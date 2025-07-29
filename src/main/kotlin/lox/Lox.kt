@@ -55,8 +55,10 @@ private fun run(source: String) {
     }
 }
 
-private fun error(line: Int, message: String) {
-    report(line, "", message)
+object Lox {
+    fun error(line: Int, message: String) {
+        report(line, "", message)
+    }
 }
 
 private fun report(line: Int, where: String, message: String) {
