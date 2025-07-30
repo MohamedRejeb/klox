@@ -49,10 +49,11 @@ class Scanner(private val source: String) {
 
             '/' ->
                 if (match('/')) {
-                    // A comment goes until the end of the line.
-                    while (peek() != '\n' && !isAtEnd()) {
-                        advance()
-                    }
+                    singleLineComment()
+
+                    return
+                } else if (match('*')) {
+                    multiLineComment()
 
                     return
                 } else {
@@ -84,6 +85,36 @@ class Scanner(private val source: String) {
         }
 
         addToken(type)
+    }
+
+    // A single-line comment goes until the end of the line.
+    private fun singleLineComment() {
+        while (peek() != '\n' && !isAtEnd()) {
+            advance()
+        }
+    }
+
+    // A multi-line comment goes until the closing */.
+    private fun multiLineComment() {
+        while (!isAtEnd()) {
+            val peek = peek()
+            val peekNext = peekNext()
+            val isCommentEnd = peek == '*' && peekNext == '/'
+
+            if (peek == '\n')
+                line++
+            if (peekNext == '\n')
+                line++
+
+            advance()
+
+            // If the next char is not '*', we can have a performance boost and skip it
+            if (peekNext != '*' && peekNext != NUL_CHAR)
+                advance()
+
+            if (isCommentEnd)
+                break
+        }
     }
 
     private fun identifier() {
@@ -150,14 +181,14 @@ class Scanner(private val source: String) {
 
     private fun peek(): Char {
         if (isAtEnd())
-            return '\u0000' // '\0' or NUL character
+            return NUL_CHAR // '\0' or NUL character
 
         return source[current]
     }
 
     private fun peekNext(): Char {
         if (current + 1 >= source.length)
-            return '\u0000' // '\0' or NUL character
+            return NUL_CHAR // '\0' or NUL character
 
         return source[current + 1]
     }
@@ -219,6 +250,8 @@ class Scanner(private val source: String) {
             "var" to TokenType.VAR,
             "while" to TokenType.WHILE,
         )
+
+        private const val NUL_CHAR = '\u0000'
     }
 
 }
