@@ -32,7 +32,7 @@ interface Expr {
     }
 
     data class Literal(
-        val value: Object,
+        val value: Any?,
     ): Expr {
 
         override fun <R> accept(visitor: Visitor<R>): R {
